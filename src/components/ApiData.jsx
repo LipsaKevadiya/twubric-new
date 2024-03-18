@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
-import Table from "react-bootstrap/Table";
+import React, { useEffect, useState } from "react";
 
-function ApiData() {
+function ApiData({ startDate, endDate }) {
   const [data, setData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
   const [sortOrder, setSortOrder] = useState("asc");
 
   useEffect(() => {
@@ -15,6 +15,18 @@ function ApiData() {
     });
   }, []);
 
+  useEffect(() => {
+    // Filter data based on startDate and endDate
+    const filtered = data.filter((user) => {
+      const joinDate = new Date(user.join_date * 1000);
+      return (
+        (!startDate || joinDate >= new Date(startDate)) &&
+        (!endDate || joinDate <= new Date(endDate))
+      );
+    });
+    setFilteredData(filtered);
+  }, [data, startDate, endDate]);
+
   function deleteUser(uid) {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this user?"
@@ -24,139 +36,106 @@ function ApiData() {
     }
   }
 
-  function sortByFriends() {
-    const sortedData = [...data].sort((a, b) => {
+  function sortBy(key) {
+    const sortedData = [...filteredData].sort((a, b) => {
       if (sortOrder === "asc") {
-        return a.twubric.friends - b.twubric.friends;
+        return a.twubric[key] - b.twubric[key];
       } else {
-        return b.twubric.friends - a.twubric.friends;
+        return b.twubric[key] - a.twubric[key];
       }
     });
-    setData(sortedData);
-    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-  }
-
-  function sortByInfluence() {
-    const sortedData = [...data].sort((a, b) => {
-      if (sortOrder === "asc") {
-        return a.twubric.influence - b.twubric.influence;
-      } else {
-        return b.twubric.influence - a.twubric.influence;
-      }
-    });
-    setData(sortedData);
-    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-  }
-  function sortByChirpiness() {
-    const sortedData = [...data].sort((a, b) => {
-      if (sortOrder === "asc") {
-        return a.twubric.chirpiness - b.twubric.chirpiness;
-      } else {
-        return b.twubric.chirpiness - a.twubric.chirpiness;
-      }
-    });
-    setData(sortedData);
-    setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-  }
-  function sortByTotal() {
-    const sortedData = [...data].sort((a, b) => {
-      if (sortOrder === "asc") {
-        return a.twubric.total - b.twubric.total;
-      } else {
-        return b.twubric.total - a.twubric.total;
-      }
-    });
-    setData(sortedData);
+    setFilteredData(sortedData);
     setSortOrder(sortOrder === "asc" ? "desc" : "asc");
   }
 
   return (
-    <div>
-      <div className="mt-4 px-5">
-        <div className="row mb-3">
-          <div className="col-md-6">
-            <h3 className="text-secondary" >
-              Sort By:
-            </h3>
-            <div className="btn-group" role="group" aria-label="Sort By">
-              <button
-                type="button"
-                className="btn btn-secondary active"
-                data-sort="twubric.total"
-                onClick={sortByTotal}
-              >
-                Twubric Score
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                data-sort="twubric.friends"
-                onClick={sortByFriends}
-              >
-                Friends
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                data-sort="twubric.influence"
-                onClick={sortByInfluence}
-              >
-                Influence
-              </button>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                data-sort="twubric.chirpiness"
-                onClick={sortByChirpiness}
-              >
-                Chirpiness
-              </button>
+    <div className="container mt-4">
+      <h3 className="text-danger">Sort By:</h3>
+      <div className="btn-group mb-3" role="group" aria-label="Sort By">
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => sortBy("total")}
+        >
+          Twubric Score
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => sortBy("friends")}
+        >
+          Friends
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => sortBy("influence")}
+        >
+          Influence
+        </button>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => sortBy("chirpiness")}
+        >
+          Chirpiness
+        </button>
+      </div>
+      <div className="container mt-4">
+        <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+          {filteredData.map((user, i) => (
+            <div key={i} className="col">
+              <div className="card h-100 shadow">
+                <div className="row g-0">
+                  <div className="col-md-4 d-flex align-items-center justify-content-center p-2">
+                    <img
+                      src={user.image}
+                      className="img-fluid  rounded"
+                      alt={`user${i + 1}`}
+                      style={{ width: "150px", height: "150px" }}
+                    />
+                  </div>
+                  <div className="col-md-8">
+                    <div className="card-body">
+                      <div className="d-flex justify-content-between mt-3">
+                        <h5 className="card-title ">{user.fullname}</h5>
+                        <p className="card-title">{user.twubric.total}</p>
+                      </div>
+                      <div className="d-flex justify-content-between mt-3">
+                        <p className="card-text">
+                          Friends {user.twubric.friends}
+                        </p>
+                        <p className="card-text">
+                          Influence {user.twubric.influence}
+                        </p>
+                        <p className="card-text">
+                          Chirpiness {user.twubric.chirpiness}
+                        </p>
+                      </div>
+                      <div className="d-flex justify-content-between mt-3">
+                        <p className="card-text ">
+                          Join Date:{" "}
+                          <p className="card-text ">
+                            {new Date(user.join_date * 1000).toDateString()}
+                          </p>
+                        </p>
+                        <button
+                          className="btn  btn-danger btn-sm"
+                          onClick={() => deleteUser(user.uid)}
+                          style={{ width: "80px", height: "30px" }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       </div>
-      <Table striped bordered hover>
-        <tbody>
-          <tr style={{ backgroundColor: "black" }}>
-            <th>uid</th>
-            <th>username</th>
-            <th>image</th>
-            <th>fullname</th>
-            <th>total</th>
-            <th>friends</th>
-            <th>influence</th>
-            <th>chirpiness</th>
-            <th>join_date</th>
-            <th>Action</th>
-          </tr>
-          {data.map((item) => (
-            <tr style={{ backgroundColor: "darkGrey" }} key={item.uid}>
-              <td>{item.uid}</td>
-              <td>{item.username}</td>
-              <td>
-                <img src={item.image} className="rounded" alt={item.username} />
-              </td>
-              <td>{item.fullname}</td>
-              <td>{item.twubric.total}</td>
-              <td>{item.twubric.friends}</td>
-              <td>{item.twubric.influence}</td>
-              <td>{item.twubric.chirpiness}</td>
-
-              <td>{new Date(item.join_date * 1000).toDateString()}</td>
-              <td>
-                <button
-                  className="btn btn-danger btn-sm"
-                  onClick={() => deleteUser(item.uid)}
-                >
-                  Remove
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
     </div>
   );
 }
-
 export default ApiData;
